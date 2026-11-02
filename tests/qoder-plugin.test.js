@@ -69,7 +69,7 @@ test('qoder rules match AGENTS.md canonical body', () => {
   // byte-identical to AGENTS.md minus the repo-self-application paragraph.
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8')
     .replace(/\r\n/g, '\n').trim();
-  const canonical = agents.replace(/\n\n\(Yes, this file also applies[\s\S]*?\)$/, '').trim();
+  const canonical = agents.replace(/\n\n\(Yes, this file also applies[\s\S]*$/, '').trim();
   const qoderCopy = fs.readFileSync(path.join(root, '.qoder', 'rules', 'ponytail.md'), 'utf8')
     .replace(/\r\n/g, '\n').trim();
   assert.equal(qoderCopy, canonical, '.qoder/rules/ponytail.md drifted from AGENTS.md');

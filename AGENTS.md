@@ -30,3 +30,29 @@ Take the first option that fully works:
 Never cut: validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, anything the user asked for.
 
 (Yes, this file also applies to agents working on the ponytail repo itself. Especially to them.)
+
+---
+
+# LLM Wiki
+
+A structured, interlinked knowledge base maintained by AI agents, based on Andrej Karpathy's LLM Wiki pattern.
+
+## Folder Structure
+
+| Folder | Note |
+| --- | --- |
+| `docs/wiki/raw/` | Source documents (immutable -- never modify these) |
+| `docs/wiki/wiki/` | Markdown pages maintained by agentic AI |
+| `docs/wiki/wiki/patterns/` | Implementation and architectural patterns |
+| `docs/wiki/wiki/decisions/` | Recorded technical decisions |
+| `docs/wiki/wiki/concepts/` | Reusable domain and codebase concepts |
+| `docs/wiki/wiki/index.md` | Grouped table of contents for the entire wiki |
+| `docs/wiki/wiki/log.md` | Append-only record of all operations |
+| `docs/wiki/wiki/tasks/backlog.md` | Living checklist of pending / in-progress / done tasks |
+
+## Rules
+- Never modify anything in `docs/wiki/raw/`.
+- Always update `docs/wiki/wiki/index.md` and `docs/wiki/wiki/log.md` after changes.
+- Keep page and folder names lowercase with hyphens (e.g., `machine-learning.md`).
+- Use path-qualified `[[wiki-links]]`.
+
