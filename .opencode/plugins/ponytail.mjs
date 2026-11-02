@@ -24,6 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const { getPonytailInstructions } = require('../../hooks/ponytail-instructions');
 const { getDefaultMode, normalizeMode, writeDefaultMode } = require('../../hooks/ponytail-config');
+const { handleBrainSubcommand } = require('../../hooks/ponytail-brain');
 const { parseCommandFile, parseSkillFile } = require('./ponytail-frontmatter.cjs');
 
 // OpenCode has no flag-file convention of its own; keep mode beside its config.
@@ -56,6 +57,10 @@ function persistMode(args) {
   const wanted = String(args == null ? '' : args).trim();
   // `/ponytail default <level>` saves the default for new sessions, like the Claude hook.
   const [first, second] = wanted.toLowerCase().split(/\s+/);
+  if (first === 'brain') {
+    console.log(handleBrainSubcommand(wanted.split(/\s+/).slice(1).join(' ')));
+    return;
+  }
   if (first === 'default') {
     const saved = writeDefaultMode(second);
     if (saved) console.log('ponytail default ' + saved);

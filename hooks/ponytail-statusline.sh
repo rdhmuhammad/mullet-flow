@@ -9,7 +9,7 @@ mode=$(head -n1 "$flag" | tr -d '[:space:]')
 # default green at a glance. The level is still in the text, so color is a
 # redundant cue, not the only one.
 color=108
-[ "$mode" = "ultra" ] && color=173
+[ "$mode" = "ultra" ] || [ "$mode" = "max" ] || [ "$mode" = "ultra-max" ] && color=173
 
 if [ -z "$mode" ] || [ "$mode" = "full" ]; then
     printf '\033[38;5;%sm[PONYTAIL]\033[0m' "$color"

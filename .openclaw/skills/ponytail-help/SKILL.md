@@ -17,6 +17,8 @@ write flag files, or persist anything.
 | **Lite** | `/ponytail lite` | Build what was asked, name the smaller option in one line. |
 | **Full** | `/ponytail` | The smallest complete change, a check where the logic needs one, and a reply that names what was skipped and any risk. Default. |
 | **Ultra** | `/ponytail ultra` | Also questions the request and pushes back before building. |
+| **Max** | `/ponytail max` | Full mode + Brain: indexes and reads matched Brain docs after planning, enforces `rules/`, and cites `Brain applied:`. |
+| **Ultra-Max** | `/ponytail ultra-max` | Ultra mode + Brain: questions the request first, then indexes/reads Brain docs and enforces `rules/`. |
 
 Level sticks until changed or session end.
 
@@ -29,6 +31,7 @@ Level sticks until changed or session end.
 | **ponytail-audit** | `/ponytail-audit` | The same quality review for the whole repo, ranked. |
 | **ponytail-debt** | `/ponytail-debt` | Harvest `shortcut:` comments into a tracked ledger. |
 | **ponytail-gain** | `/ponytail-gain` | Measured-impact scoreboard: less code, less cost, more speed. |
+| **ponytail-brain** | `/ponytail-brain` | Manage or capture rules, patterns, architecture, snippets, and configs in the Brain repository (`/ponytail brain init|list|path <dir>`). |
 | **ponytail-help** | `/ponytail-help` | This card. |
 
 In Codex CLI and the IDE extension, invoke skills with `$ponytail:ponytail`,

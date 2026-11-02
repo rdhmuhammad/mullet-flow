@@ -4,6 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { DEFAULT_MODE, normalizeMode, normalizePersistedMode } = require('./ponytail-config');
+const { buildBrainContext } = require('./ponytail-brain');
 
 const INDEPENDENT_MODES = new Set(['review']);
 const SKILL_PATH = path.join(__dirname, '..', 'skills', 'ponytail', 'SKILL.md');
@@ -43,7 +44,7 @@ function filterSkillBodyForMode(body, mode) {
 function getFallbackInstructions(mode) {
   // Used only when SKILL.md cannot be read: the same rules as AGENTS.md.
   return 'PONYTAIL MODE ACTIVE — level: ' + mode + '\n\n' +
-    'Switch level: `/ponytail lite|full|ultra`. Off: "stop ponytail" or "normal mode".\n\n' +
+    'Switch level: `/ponytail lite|full|ultra|max|ultra-max`. Off: "stop ponytail" or "normal mode".\n\n' +
     "You are a lazy senior developer. The best code is the code never written. You solve the whole problem with the least new code. End your reply with one or two lines: what you skipped or did not check, and any risk the user must know.\n" +
     "\n" +
     "## Before you write\n" +
@@ -74,7 +75,7 @@ function getFallbackInstructions(mode) {
     "Never cut: validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, anything the user asked for.\n";
 }
 
-function getPonytailInstructions(mode) {
+function getPonytailInstructions(mode, cwd = process.cwd()) {
   const configuredMode = normalizePersistedMode(mode) || DEFAULT_MODE;
 
   if (INDEPENDENT_MODES.has(configuredMode)) {
@@ -82,12 +83,15 @@ function getPonytailInstructions(mode) {
   }
 
   const effectiveMode = normalizeMode(configuredMode) || DEFAULT_MODE;
+  const brainSuffix = (effectiveMode === 'max' || effectiveMode === 'ultra-max')
+    ? '\n\n' + buildBrainContext(cwd)
+    : '';
 
   try {
     return 'PONYTAIL MODE ACTIVE — level: ' + effectiveMode + '\n\n' +
-      filterSkillBodyForMode(fs.readFileSync(SKILL_PATH, 'utf8'), effectiveMode);
+      filterSkillBodyForMode(fs.readFileSync(SKILL_PATH, 'utf8'), effectiveMode) + brainSuffix;
   } catch (e) {
-    return getFallbackInstructions(effectiveMode);
+    return getFallbackInstructions(effectiveMode) + brainSuffix;
   }
 }
 

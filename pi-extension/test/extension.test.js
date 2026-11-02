@@ -65,7 +65,7 @@ function withTempConfig(fn) {
 test("extension registers Ponytail commands", () => {
   const { commands } = createPiHarness();
 
-  assert.deepEqual([...commands.keys()].sort(), ["ponytail", "ponytail-audit", "ponytail-debt", "ponytail-gain", "ponytail-help", "ponytail-review"]);
+  assert.deepEqual([...commands.keys()].sort(), ["ponytail", "ponytail-audit", "ponytail-brain", "ponytail-debt", "ponytail-gain", "ponytail-help", "ponytail-review"]);
 });
 
 test("/ponytail updates session mode and injects instructions", async () => withTempConfig(async () => {
@@ -352,12 +352,12 @@ test("/ponytail autocompletes modes, commands and default <mode>", () => {
   const complete = (prefix) => commands.get("ponytail").getArgumentCompletions(prefix);
 
   assert.deepEqual(complete("").map((item) => item.value),
-    ["off", "lite", "full", "ultra", "status", "default off", "default lite", "default full", "default ultra"]);
+    ["off", "lite", "full", "ultra", "max", "ultra-max", "status", "brain init", "brain list", "default off", "default lite", "default full", "default ultra", "default max", "default ultra-max"]);
   assert.deepEqual(complete("fu").map((item) => item.value), ["full"]);
-  assert.deepEqual(complete("default ").map((item) => item.value), ["default off", "default lite", "default full", "default ultra"]);
+  assert.deepEqual(complete("default ").map((item) => item.value), ["default off", "default lite", "default full", "default ultra", "default max", "default ultra-max"]);
   assert.deepEqual(complete("default l").map((item) => item.value), ["default lite"]);
   assert.deepEqual(complete("default").map((item) => item.value),
-    ["default off", "default lite", "default full", "default ultra"], "never a bare default: Enter would submit it without a mode");
+    ["default off", "default lite", "default full", "default ultra", "default max", "default ultra-max"], "never a bare default: Enter would submit it without a mode");
   assert.equal(complete("status x"), null, "no command takes a second word after status");
   assert.equal(complete("lite x"), null);
   assert.equal(complete("bogus"), null, "nothing matches an unknown prefix");

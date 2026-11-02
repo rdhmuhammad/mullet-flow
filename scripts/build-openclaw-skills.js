@@ -22,6 +22,7 @@ const DESCRIPTIONS = {
   'ponytail-audit': 'Quality audit of the whole repo: bugs, security, real load, missing tests, speed, and what to delete. Most important first.',
   'ponytail-debt': 'Harvest every shortcut: comment into one debt ledger, so deferrals get tracked instead of forgotten. One-shot report.',
   'ponytail-gain': 'Show ponytail measured impact as a scoreboard: less code, less cost, more speed, from the agentic benchmark averages. One-shot display.',
+  'ponytail-brain': 'Manage or capture rules, patterns, architecture, snippets, and configs into the Ponytail Brain repository for max and ultra-max modes.',
   'ponytail-help': "Quick reference for ponytail's modes, skills, and commands. One-shot display.",
 };
 

@@ -14,8 +14,8 @@ const path = require('path');
 const os = require('os');
 
 const DEFAULT_MODE = 'full';
-const VALID_MODES = ['off', 'lite', 'full', 'ultra', 'review'];
-const RUNTIME_MODES = ['off', 'lite', 'full', 'ultra'];
+const VALID_MODES = ['off', 'lite', 'full', 'ultra', 'max', 'ultra-max', 'review'];
+const RUNTIME_MODES = ['off', 'lite', 'full', 'ultra', 'max', 'ultra-max'];
 
 function normalizeMode(mode) {
   if (typeof mode !== 'string') return null;
@@ -138,6 +138,38 @@ function getHideStatus() {
   }
 }
 
+function getBrainDir() {
+  const env = (process.env.PONYTAIL_BRAIN_DIR || '').trim();
+  if (env) return path.resolve(env);
+  try {
+    const config = JSON.parse(fs.readFileSync(getConfigPath(), 'utf8').replace(/^\uFEFF/, ''));
+    if (typeof config.brainDir === 'string' && config.brainDir.trim()) {
+      return path.resolve(config.brainDir.trim());
+    }
+  } catch (_) {}
+  return path.join(getConfigDir(), 'brain');
+}
+
+function getLocalBrainDir(cwd = process.cwd()) {
+  return path.join(cwd, 'brain');
+}
+
+function writeBrainDir(dir) {
+  const trimmed = typeof dir === 'string' ? dir.trim() : '';
+  if (!trimmed) return null;
+  const resolved = path.resolve(trimmed);
+  const configPath = getConfigPath();
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  let config = {};
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8').replace(/^\uFEFF/, ''));
+    if (!config || typeof config !== 'object' || Array.isArray(config)) config = {};
+  } catch (_) {}
+  config.brainDir = resolved;
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+  return resolved;
+}
+
 function writeDefaultMode(mode) {
   // ponytail: only a runtime level can be a default; review is session-only (#377).
   const normalized = normalizeMode(mode);
@@ -159,6 +191,8 @@ module.exports = {
   DEFAULT_MODE,
   VALID_MODES,
   RUNTIME_MODES,
+  getBrainDir,
+  getLocalBrainDir,
   getDefaultMode,
   getConfigDir,
   getConfigPath,
@@ -171,5 +205,6 @@ module.exports = {
   normalizeConfigMode,
   normalizePersistedMode,
   isDeactivationCommand,
+  writeBrainDir,
   writeDefaultMode,
 };

@@ -85,9 +85,9 @@ test('V2 setup registers all six commands and all six skills', async () => {
   const { added } = await setupV2();
   assert.deepEqual(
     added.commands.map((c) => c.name).sort(),
-    ['ponytail', 'ponytail-audit', 'ponytail-debt', 'ponytail-gain', 'ponytail-help', 'ponytail-review'],
+    ['ponytail', 'ponytail-audit', 'ponytail-brain', 'ponytail-debt', 'ponytail-gain', 'ponytail-help', 'ponytail-review'],
   );
-  assert.equal(added.skills.length, 6);
+  assert.equal(added.skills.length, 7);
   for (const skill of added.skills) {
     // V2 rejects a skill without these (Skill.Info: id, name, path, content).
     assert.ok(skill.id && skill.name && skill.path && skill.content, `incomplete skill ${skill.id}`);

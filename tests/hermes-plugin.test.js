@@ -11,7 +11,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { filterSkillBodyForMode } = require('../hooks/ponytail-instructions');
 
-const commands = ['ponytail', 'ponytail-review', 'ponytail-audit', 'ponytail-debt', 'ponytail-gain', 'ponytail-help'];
+const commands = ['ponytail', 'ponytail-review', 'ponytail-audit', 'ponytail-debt', 'ponytail-gain', 'ponytail-brain', 'ponytail-help'];
 const skillCommands = commands.filter((name) => name !== 'ponytail');
 
 const root = path.join(__dirname, '..');
@@ -90,6 +90,7 @@ print(json.dumps({'skills': ctx.skills, 'hooks': ctx.hooks, 'commands': ctx.comm
   assert.deepEqual(data.skills.map(([name]) => name).sort(), [
     'ponytail',
     'ponytail-audit',
+    'ponytail-brain',
     'ponytail-debt',
     'ponytail-gain',
     'ponytail-help',
@@ -388,7 +389,7 @@ test('Hermes mode filter stays in lockstep with the JS filter on the real skill 
   // on skills/ponytail/SKILL.md instead of trusting the two implementations to
   // stay in sync by hand.
   const body = fs.readFileSync(path.join(root, 'skills', 'ponytail', 'SKILL.md'), 'utf8');
-  for (const mode of ['lite', 'full', 'ultra']) {
+  for (const mode of ['lite', 'full', 'ultra', 'max', 'ultra-max']) {
     const jsFiltered = filterSkillBodyForMode(body, mode);
     const pyFiltered = python(String.raw`
 import importlib.util, json

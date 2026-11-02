@@ -9,12 +9,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 DEFAULT_MODE = "full"
-RUNTIME_MODES = {"off", "lite", "full", "ultra"}
+RUNTIME_MODES = {"off", "lite", "full", "ultra", "max", "ultra-max"}
 SKILL_COMMANDS = {
     "ponytail-review": "Review the current diff or provided target: bugs, security, load, missing tests, speed, and what to cut.",
     "ponytail-audit": "Audit the whole repo: bugs, security, load, missing tests, speed, and what to cut.",
     "ponytail-debt": "List every deliberate `shortcut:` comment and its upgrade path.",
     "ponytail-gain": "Show the measured-impact scoreboard (less code, less cost, more speed).",
+    "ponytail-brain": "Manage or capture rules, patterns, architecture, snippets, and configs in the Brain repository.",
     "ponytail-help": "Show the Ponytail command reference.",
 }
 
@@ -127,7 +128,7 @@ def _pre_llm_call(
         api_content = message.get("api_content")
         if not isinstance(api_content, str):
             continue
-        matches = re.findall(r"PONYTAIL MODE (?:ACTIVE — level: ([a-z]+)|OFF)", api_content)
+        matches = re.findall(r"PONYTAIL MODE (?:ACTIVE — level: ([a-z-]+)|OFF)", api_content)
         if matches:
             return None if (matches[-1] or "off") == mode else {"context": context}
 
@@ -178,12 +179,12 @@ def _handle_mode_command(raw_args: str) -> str:
         # Bare /ponytail switches ponytail on, or reports the level when it already is (#639).
         mode = _current_mode or _default_mode()
         if mode != "off":
-            return f"Ponytail mode: {mode}. Use `/ponytail lite|full|ultra|off`."
+            return f"Ponytail mode: {mode}. Use `/ponytail lite|full|ultra|max|ultra-max|off`."
         _current_mode = "full" if _default_mode() == "off" else _default_mode()
         return f"Ponytail mode set to {_current_mode}."
     mode = _normalize_runtime_mode(arg)
     if not mode:
-        return "Usage: /ponytail [lite|full|ultra|off]"
+        return "Usage: /ponytail [lite|full|ultra|max|ultra-max|off]"
     _current_mode = mode
     return f"Ponytail mode set to {mode}."
 
@@ -216,8 +217,8 @@ def register(ctx: Any) -> None:
     ctx.register_command(
         "ponytail",
         _handle_mode_command,
-        description="Set Ponytail lazy senior dev mode: lite, full, ultra, or off.",
-        args_hint="[lite|full|ultra|off]",
+        description="Set Ponytail lazy senior dev mode: lite, full, ultra, max, ultra-max, or off.",
+        args_hint="[lite|full|ultra|max|ultra-max|off]",
     )
     for command, description in SKILL_COMMANDS.items():
         ctx.register_command(

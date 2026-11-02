@@ -5,7 +5,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { getClaudeDir, getDefaultMode, isDeactivationCommand, writeDefaultMode } = require('./ponytail-config');
+const { getClaudeDir, getDefaultMode, isDeactivationCommand, normalizeMode, writeDefaultMode } = require('./ponytail-config');
+const { buildBrainContext, handleBrainSubcommand } = require('./ponytail-brain');
 const {
   clearMode,
   cursorRuleNotice,
@@ -30,7 +31,8 @@ function finish() {
   try {
     // Strip UTF-8 BOM some shells prepend when piping (breaks JSON.parse)
     const data = JSON.parse(input.replace(/^\uFEFF/, ''));
-    const prompt = (data.prompt || '').trim().toLowerCase();
+    const rawPrompt = (data.prompt || '').trim();
+    const prompt = rawPrompt.toLowerCase();
 
     // Cursor with the always-on rule in the workspace: no hook can change or
     // switch off a rule, so answer the command with the notice instead of
@@ -66,7 +68,7 @@ function finish() {
         // valid default (#377), so only off/lite/full/ultra are accepted.
         if (arg === 'default') {
           const dmode = parts[2];
-          if (dmode === 'off' || dmode === 'lite' || dmode === 'full' || dmode === 'ultra') {
+          if (normalizeMode(dmode)) {
             writeDefaultMode(dmode);
             defaultNotice = 'PONYTAIL DEFAULT SET — new sessions start in ' + dmode + '.';
             if (!isQoder) writeHookOutput('UserPromptSubmit', dmode, defaultNotice);
@@ -102,9 +104,18 @@ function finish() {
             : 'PONYTAIL BAND OFF: the band above the prompt is hidden, `/ponytail band` brings it back. The ponytail level is unchanged. Confirm in one short line.');
           return;
         }
+        if (arg === 'brain') {
+          defaultNotice = handleBrainSubcommand(rawPrompt.split(/\s+/).slice(2).join(' '));
+          if (!isQoder) {
+            writeHookOutput('UserPromptSubmit', readMode() || 'off', defaultNotice);
+            return;
+          }
+        }
         if (arg === 'lite') mode = 'lite';
         else if (arg === 'full') mode = 'full';
         else if (arg === 'ultra') mode = 'ultra';
+        else if (arg === 'max') mode = 'max';
+        else if (arg === 'ultra-max') mode = 'ultra-max';
         else if (arg === 'off') mode = 'off';
         else if (arg === '') {
           // Bare /ponytail switches ponytail on: off → the default level (full if
@@ -144,7 +155,7 @@ function finish() {
           writeHookOutput(
             'UserPromptSubmit',
             mode,
-            (isCodex || isCursor) ? header + '\n\n' + getPonytailInstructions(mode) : header,
+            (isCodex || isCursor) ? header + '\n\n' + getPonytailInstructions(mode) : ((mode === 'max' || mode === 'ultra-max') ? header + '\n\n' + buildBrainContext() : header),
           );
         }
       } else if (mode === 'off') {

@@ -163,7 +163,7 @@ Then open `/hooks` in Codex, trust its two lifecycle hooks, and start a new thre
 
 That was it. He'd be proud. He won't say it.
 
-Active every session, with a handful of commands (see [Commands](#commands)). `/ponytail ultra` exists for when the codebase has wronged you personally. Startup and mode-change text shows the current mode.
+Active every session, with a handful of commands (see [Commands](#commands)). `/ponytail ultra` exists for when the codebase has wronged you personally. `/ponytail max` and `/ponytail ultra-max` connect your agent to your Brain knowledge repository (`rules/`, `patterns/`, `architecture/`, `snippets/`, `configs/`). Startup and mode-change text shows the current mode.
 
 Only install ponytail from `DietrichGebert/ponytail` on GitHub or `@dietrichgebert/ponytail` on npm. It never ships `.exe` or `.dll` files; a copy that does is not mine.
 
@@ -171,16 +171,70 @@ Only install ponytail from `DietrichGebert/ponytail` on GitHub or `@dietrichgebe
 
 | Command | What it does |
 |---------|--------------|
-| `/ponytail [lite \| full \| ultra \| off]` | Set the intensity, or turn it off. No argument switches ponytail on at the default level if it is off, and otherwise reports the current level. |
+| `/ponytail [lite \| full \| ultra \| max \| ultra-max \| off]` | Set the intensity, switch to Brain-assisted modes (`max`, `ultra-max`), or turn it off. No argument switches ponytail on at the default level if it is off, and otherwise reports the current level. |
+| `/ponytail brain [init \| list \| path <dir>]` | Manage your Brain repository: scaffold folders (`init` or `init --global`), list indexed and skipped documents (`list`), or view/set the global repository path (`path <dir>`). |
 | `/ponytail band [on \| off]` | Claude Code only: hide or show the band above the prompt. No argument switches it. The level stays. |
 | `/ponytail band import` | Claude Code only: add your past Claude Code sessions to the board, with their cost, agent time and tokens. |
 | `/ponytail-review` | Review the current diff like the senior dev who gets paged when it breaks: bugs, security, real load, risky code without a test, slow paths, and what to cut. Each finding says what the code does, what goes wrong, how to fix it, and what happens if you don't. Name a target in plain words to narrow or widen it: `uncommitted`, `staged`, `branch`, or a PR link. |
 | `/ponytail-audit` | The same check for the whole repo, most important first. |
 | `/ponytail-debt` | Harvest the `shortcut:` comments you've deferred into a ledger, so "later" doesn't become "never". |
 | `/ponytail-gain` | Show the measured impact scoreboard (less code, less cost, more speed) from the benchmark. |
+| `/ponytail-brain` | Manage or capture knowledge into the Brain repository from your current session (rules, patterns, architecture, snippets, configs). |
 | `/ponytail-help` | Quick reference for the commands above. |
 
 Commands need a skill-capable host (Claude Code, Codex, Devin CLI, OpenCode, Gemini, Antigravity CLI, pi, Hermes Agent, Qoder, Grok Build). In Codex CLI and the IDE extension they're skills under the plugin's namespace; invoke with `$ponytail:ponytail-review`. Cursor with the [hooks](INSTALL.md#cursor) gets `/ponytail` level switching only, typed as a plain message. The instruction-only adapters (Cursor's rule file, Windsurf, Cline, Copilot, Kiro, Antigravity's `AGENTS.md` fallback) load the always-on ruleset without the commands.
+
+## The Brain & Max Modes
+
+Ponytail can connect to a structured repository of markdown knowledge files (**Brain**) to recall project patterns, code architecture, snippets, configurations, and enforced rules.
+
+### Modes
+
+- **`max`**: Combines Ponytail `full` mode with the Brain workflow. After understanding your plan, the agent searches the Brain Index, loads matching documents, enforces rules from `rules/` above generic YAGNI defaults, and cites which documents were used (`Brain applied: ...`).
+- **`ultra-max`**: Combines `ultra` mode (questions the request and challenges scope first) with `max` Brain indexing and rule enforcement.
+
+### Structure & Location
+
+Brain documents live across two merged locations (repo-local `./brain/` overrides global `~/.config/ponytail/brain` when `<folder>/<file>.md` matches):
+
+- **Global repository**: `~/.config/ponytail/brain` (Windows: `%APPDATA%\ponytail\brain`, or configure with `PONYTAIL_BRAIN_DIR` or `config.json` `brainDir`).
+- **Repo-local repository**: `./brain/` in your workspace root.
+
+Documents are organized into 5 strict folders:
+
+| Folder | What goes here |
+|---|---|
+| `rules/` | Mandatory constraints and guardrails. Files with `when: always` are injected upfront in full; others are loaded when relevant. |
+| `patterns/` | Implementation idioms, design patterns, and conventions. |
+| `architecture/` | Module boundaries, directory structures, subsystem layouts. |
+| `snippets/` | Reusable reference code templates and idioms. |
+| `configs/` | Framework configs, linter rules, test runner setups. |
+
+### Document Format
+
+Every `.md` document in the Brain must start with YAML frontmatter specifying `title`, `tags`, and `when`:
+
+```markdown
+---
+title: Fastify Error Handler Pattern
+tags: fastify, errors, api, handlers
+when: building or editing API route error handlers
+---
+
+Always use the custom AppError class and serialize responses with schema validation...
+```
+
+### Quick Start
+
+1. Scaffold your Brain folders:
+   - `/ponytail brain init` initializes `./brain/` in the current project
+   - `/ponytail brain init --global` initializes your global Brain repository
+2. Check your indexed documents and diagnose any missing frontmatter:
+   - `/ponytail brain list`
+3. Switch into Brain mode:
+   - `/ponytail max` or `/ponytail ultra-max`
+4. Save a pattern or rule from your current chat directly into your Brain:
+   - `/ponytail-brain`
 
 ## FAQ
 

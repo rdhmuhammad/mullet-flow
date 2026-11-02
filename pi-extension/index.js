@@ -13,6 +13,7 @@ const {
   writeDefaultMode,
 } = require("../hooks/ponytail-config.js");
 const { getPonytailInstructions, filterSkillBodyForMode } = require("../hooks/ponytail-instructions.js");
+const { handleBrainSubcommand } = require("../hooks/ponytail-brain.js");
 
 export { filterSkillBodyForMode };
 export const readDefaultMode = getDefaultMode;
@@ -25,7 +26,7 @@ const PONYTAIL_COMMAND_DESCRIPTION = `Set mode: ${RUNTIME_MODE_LIST}. Commands: 
 // Values only: per-level descriptions would be a second copy of the Levels table in SKILL.md.
 export function completePonytailArgs(prefix) {
   const typed = String(prefix || "").trimStart();
-  const values = [...RUNTIME_MODES, "status", ...RUNTIME_MODES.map((m) => `default ${m}`)].filter((v) => v.startsWith(typed));
+  const values = [...RUNTIME_MODES, "status", "brain init", "brain list", ...RUNTIME_MODES.map((m) => `default ${m}`)].filter((v) => v.startsWith(typed));
   return values.length ? values.map((value) => ({ value, label: value })) : null;
 }
 
@@ -46,7 +47,8 @@ export function resolveSessionMode(entries, fallbackMode = DEFAULT_MODE) {
 
 export function parsePonytailCommand(text, defaultMode = DEFAULT_MODE, currentMode = null) {
   const fallback = normalizePersistedMode(defaultMode) || DEFAULT_MODE;
-  const normalizedText = String(text || "").trim().toLowerCase();
+  const rawText = String(text || "").trim();
+  const normalizedText = rawText.toLowerCase();
 
   if (!normalizedText) {
     // Bare /ponytail switches ponytail on, or reports the level when it already is (#639).
@@ -57,6 +59,7 @@ export function parsePonytailCommand(text, defaultMode = DEFAULT_MODE, currentMo
   const [primary, secondary] = normalizedText.split(/\s+/);
 
   if (primary === "status") return { type: "status" };
+  if (primary === "brain") return { type: "brain", args: rawText.split(/\s+/).slice(1).join(" ") };
 
   if (primary === "default") {
     // ponytail: a default must be a runtime level; review is session-only (#377).
@@ -91,7 +94,7 @@ export default function ponytailExtension(pi) {
       c.ui.setStatus("ponytail", undefined);
       return;
     }
-    const levelIcons = { lite: "🌿", full: "⚡", ultra: "🔥" };
+    const levelIcons = { lite: "🌿", full: "⚡", ultra: "🔥", max: "🧠", "ultra-max": "🔥🧠" };
     const icon = levelIcons[currentMode] || "";
     const label = currentMode.toUpperCase();
     const indicator = isActive ? theme.fg("accent", "●") : theme.fg("dim", "○");
@@ -132,6 +135,11 @@ export default function ponytailExtension(pi) {
 
       if (parsed.type === "status") {
         ctx?.ui?.notify?.(`Ponytail: current ${currentMode} • default ${configuredDefaultMode}`, "info");
+        return;
+      }
+
+      if (parsed.type === "brain") {
+        ctx?.ui?.notify?.(handleBrainSubcommand(parsed.args), "info");
         return;
       }
 
@@ -178,6 +186,11 @@ export default function ponytailExtension(pi) {
   pi.registerCommand("ponytail-debt", {
     description: "Run /skill:ponytail-debt",
     handler: (args, ctx) => sendAlias("/skill:ponytail-debt", args, ctx),
+  });
+
+  pi.registerCommand("ponytail-brain", {
+    description: "Run /skill:ponytail-brain",
+    handler: (args, ctx) => sendAlias("/skill:ponytail-brain", args, ctx),
   });
 
   pi.registerCommand("ponytail-help", {
