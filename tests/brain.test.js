@@ -202,3 +202,95 @@ test('handleBrainSubcommand and mode-tracker handle /ponytail brain and /ponytai
   assert.equal(brainCmd.status, 0, brainCmd.stderr);
   assert.match(brainCmd.stdout, /PONYTAIL BRAIN — global:/);
 }));
+
+
+test('scanBrain supports nested subfolders, tag inheritance, and local overrides', () => withBrainEnv((tmp) => {
+  const globalBrain = path.join(tmp, 'global-brain');
+  const workspace = path.join(tmp, 'workspace');
+  const localBrain = path.join(workspace, 'brain');
+
+  initBrain(globalBrain);
+  initBrain(localBrain);
+  writeBrainDir(globalBrain);
+
+  // Global nested patterns: patterns/react/state.md, patterns/react/hooks.md, patterns/node/fs.md
+  fs.mkdirSync(path.join(globalBrain, 'patterns', 'react'), { recursive: true });
+  fs.mkdirSync(path.join(globalBrain, 'patterns', 'node'), { recursive: true });
+
+  fs.writeFileSync(
+    path.join(globalBrain, 'patterns', 'react', 'state.md'),
+    '---\ntitle: Global React State\ntags: zustand\nwhen: managing state in react\n---\nGlobal zustand pattern.',
+  );
+  fs.writeFileSync(
+    path.join(globalBrain, 'patterns', 'react', 'hooks.md'),
+    '---\ntitle: Global React Hooks\ntags: custom-hooks\nwhen: creating react hooks\n---\nGlobal hooks pattern.',
+  );
+  fs.writeFileSync(
+    path.join(globalBrain, 'patterns', 'node', 'fs.md'),
+    '---\ntitle: Node FS Operations\ntags: io\nwhen: reading files in node\n---\nUse streams.',
+  );
+
+  // Local override: patterns/react/state.md
+  fs.mkdirSync(path.join(localBrain, 'patterns', 'react'), { recursive: true });
+  fs.writeFileSync(
+    path.join(localBrain, 'patterns', 'react', 'state.md'),
+    '---\ntitle: Local React State Override\ntags: redux\nwhen: managing state in react\n---\nLocal redux pattern.',
+  );
+
+  const scanned = scanBrain(workspace);
+  const stateDoc = scanned.docs.find((d) => d.rel === 'patterns/react/state.md');
+  const hooksDoc = scanned.docs.find((d) => d.rel === 'patterns/react/hooks.md');
+  const nodeDoc = scanned.docs.find((d) => d.rel === 'patterns/node/fs.md');
+
+  assert.ok(stateDoc, 'expected patterns/react/state.md to be indexed');
+  assert.equal(stateDoc.scope, 'local', 'expected local override for nested path');
+  assert.equal(stateDoc.title, 'Local React State Override');
+  assert.match(stateDoc.tags, /react/, 'expected subfolder name to be inherited into tags');
+
+  assert.ok(hooksDoc, 'expected patterns/react/hooks.md to be indexed');
+  assert.equal(hooksDoc.scope, 'global');
+  assert.match(hooksDoc.tags, /react/, 'expected react tag from subfolder');
+
+  assert.ok(nodeDoc, 'expected patterns/node/fs.md to be indexed');
+  assert.match(nodeDoc.tags, /node/, 'expected node tag from subfolder');
+
+  // Test search subcommand
+  const searchReact = handleBrainSubcommand('search react', workspace);
+  assert.match(searchReact, /query: "react" \(2 matches\)/);
+  assert.match(searchReact, /patterns\/react\/state\.md/);
+  assert.match(searchReact, /patterns\/react\/hooks\.md/);
+
+  // Test list with folder filter
+  const listReact = handleBrainSubcommand('list react', workspace);
+  assert.match(listReact, /Indexed documents \(2 matching "react"\)/);
+}));
+
+test('buildBrainContext rolls up subfolders when docs exceed budget limit', () => withBrainEnv((tmp) => {
+  const globalBrain = path.join(tmp, 'global-brain');
+  const workspace = path.join(tmp, 'workspace');
+  initBrain(globalBrain);
+  writeBrainDir(globalBrain);
+
+  // Create 5 docs in patterns/react/
+  const reactDir = path.join(globalBrain, 'patterns', 'react');
+  fs.mkdirSync(reactDir, { recursive: true });
+  for (let i = 1; i <= 5; i++) {
+    fs.writeFileSync(
+      path.join(reactDir, `hook-${i}.md`),
+      `---\ntitle: React Hook ${i}\ntags: hooks, react\nwhen: hook ${i}\n---\nBody ${i}`,
+    );
+  }
+
+  // Force low budget limit to trigger rollup
+  const prevMaxDocs = process.env.PONYTAIL_BRAIN_MAX_DOCS;
+  process.env.PONYTAIL_BRAIN_MAX_DOCS = '2';
+
+  try {
+    const ctx = buildBrainContext(workspace);
+    assert.match(ctx, /patterns\/react\/\* \(5 docs in .*patterns.react\) — tags:/);
+    assert.match(ctx, /Run `\/ponytail brain search <keyword>`/);
+  } finally {
+    if (prevMaxDocs === undefined) delete process.env.PONYTAIL_BRAIN_MAX_DOCS;
+    else process.env.PONYTAIL_BRAIN_MAX_DOCS = prevMaxDocs;
+  }
+}));
